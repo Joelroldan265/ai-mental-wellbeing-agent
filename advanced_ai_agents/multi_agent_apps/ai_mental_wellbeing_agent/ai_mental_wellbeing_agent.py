@@ -5,7 +5,7 @@ import os
 os.environ["AUTOGEN_USE_DOCKER"] = "0"
 
 # ─── API KEY ────────────────────────────────────────────────────────────────
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+OPENAI_API_KEY = "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"
 # ─────────────────────────────────────────────────────────────────────────────
 
 if 'output' not in st.session_state:
@@ -146,13 +146,13 @@ if st.button(t['btn'], type="primary"):
             Support System: {', '.join(support_system) if support_system else 'None reported'}
             Recent Changes: {recent_changes}
             Current Symptoms: {', '.join(current_symptoms) if current_symptoms else 'None reported'}
-            IMPORTANT: You MUST respond entirely in {'Spanish. Use formal but warm Spanish throughout your entire response. Do not use any English words or phrases.' if lang == 'es' else 'English. Use warm and professional English throughout your entire response. Do not use any Spanish words or phrases.'}.me
+            Respond in {'Spanish' if lang == 'es' else 'English'}.
             """
 
             system_messages = {
                 "assessment_agent": "You are an experienced mental health professional. Analyze the user's emotional state with clinical precision and genuine empathy. Use 'you' and 'your' when addressing the user.",
                 "action_agent": "You are a crisis intervention and resource specialist. Provide immediate evidence-based coping strategies and create a concrete daily wellness plan.",
-                "followup_agent": "You are a mental health recovery planner. Design a personalized long-term support strategy with milestone markers and relapse prevention strategies."Always respond in {'Spanish' if lang == 'es' else 'English'}.
+                "followup_agent": "You are a mental health recovery planner. Design a personalized long-term support strategy with milestone markers and relapse prevention strategies."
             }
 
             llm_config = {
