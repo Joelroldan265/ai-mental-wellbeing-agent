@@ -1,226 +1,235 @@
 import streamlit as st
-from autogen import (SwarmAgent, SwarmResult, initiate_swarm_chat, OpenAIWrapper,AFTER_WORK,UPDATE_SYSTEM_MESSAGE)
+from autogen import (SwarmAgent, SwarmResult, initiate_swarm_chat, OpenAIWrapper, AFTER_WORK, UPDATE_SYSTEM_MESSAGE)
 import os
 
 os.environ["AUTOGEN_USE_DOCKER"] = "0"
 
+# ─── API KEY ────────────────────────────────────────────────────────────────
+OPENAI_API_KEY = "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"
+# ─────────────────────────────────────────────────────────────────────────────
+
 if 'output' not in st.session_state:
-    st.session_state.output = {
-        'assessment': '',
-        'action': '',
-        'followup': ''
+    st.session_state.output = {'assessment': '', 'action': '', 'followup': ''}
+
+if 'lang' not in st.session_state:
+    st.session_state.lang = 'es'
+
+# ─── TEXTOS BILINGÜES ────────────────────────────────────────────────────────
+T = {
+    'es': {
+        'title': '🧠 Agente de Bienestar Mental',
+        'lang_btn': '🌐 Switch to English',
+        'warning_title': '⚠️ Aviso Importante',
+        'warning_body': (
+            "Esta aplicación es una herramienta de apoyo y **no reemplaza** la atención "
+            "profesional de salud mental. Si estás en crisis:\n\n"
+            "- 📞 Línea de crisis: 800-290-0024 (México)\n"
+            "- 🚨 Emergencias: 911\n"
+            "- Busca ayuda profesional de inmediato"
+        ),
+        'team_info': (
+            "**Conoce a tu Equipo de Bienestar Mental:**\n\n"
+            "🧠 **Agente de Evaluación** — Analiza tu situación y necesidades emocionales\n\n"
+            "🎯 **Agente de Acción** — Crea un plan de acción inmediato y te conecta con recursos\n\n"
+            "🔄 **Agente de Seguimiento** — Diseña tu estrategia de apoyo a largo plazo"
+        ),
+        'personal_info': '📋 Información Personal',
+        'feeling': '¿Cómo te has sentido últimamente?',
+        'feeling_placeholder': 'Describe tu estado emocional, pensamientos o preocupaciones...',
+        'sleep': 'Patrón de Sueño (horas por noche)',
+        'stress': 'Nivel de Estrés Actual (1-10)',
+        'support': 'Sistema de Apoyo Actual',
+        'support_opts': ['Familia', 'Amigos', 'Terapeuta', 'Grupos de Apoyo', 'Ninguno'],
+        'changes': '¿Cambios o eventos significativos recientes?',
+        'changes_placeholder': 'Cambios de trabajo, relaciones, pérdidas, etc...',
+        'symptoms': 'Síntomas Actuales',
+        'symptoms_opts': ['Ansiedad', 'Depresión', 'Insomnio', 'Fatiga', 'Pérdida de Interés',
+                          'Dificultad para Concentrarse', 'Cambios en el Apetito',
+                          'Aislamiento Social', 'Cambios de Humor', 'Malestar Físico'],
+        'btn': '🔍 Obtener Plan de Apoyo',
+        'spinner': '🤔 Los Agentes IA están analizando tu situación...',
+        'assessment_exp': '📊 Evaluación de la Situación',
+        'action_exp': '🎯 Plan de Acción y Recursos',
+        'followup_exp': '🔄 Estrategia de Apoyo a Largo Plazo',
+        'success': '✅ ¡Plan de bienestar mental generado exitosamente!',
+        'error': 'Ocurrió un error: ',
+        'assessment_label': 'Evaluación: ',
+        'action_label': 'Plan de Acción: ',
+        'followup_label': 'Seguimiento: ',
+    },
+    'en': {
+        'title': '🧠 Mental Wellbeing Agent',
+        'lang_btn': '🌐 Cambiar a Español',
+        'warning_title': '⚠️ Important Notice',
+        'warning_body': (
+            "This application is a supportive tool and does **not replace** professional mental health care. "
+            "If you're in crisis:\n\n"
+            "- 📞 Crisis Hotline: 988 (USA)\n"
+            "- 🚨 Emergency Services: 911\n"
+            "- Seek immediate professional help"
+        ),
+        'team_info': (
+            "**Meet Your Mental Wellbeing Agent Team:**\n\n"
+            "🧠 **Assessment Agent** — Analyzes your situation and emotional needs\n\n"
+            "🎯 **Action Agent** — Creates immediate action plan and connects you with resources\n\n"
+            "🔄 **Follow-up Agent** — Designs your long-term support strategy"
+        ),
+        'personal_info': '📋 Personal Information',
+        'feeling': 'How have you been feeling recently?',
+        'feeling_placeholder': 'Describe your emotional state, thoughts, or concerns...',
+        'sleep': 'Sleep Pattern (hours per night)',
+        'stress': 'Current Stress Level (1-10)',
+        'support': 'Current Support System',
+        'support_opts': ['Family', 'Friends', 'Therapist', 'Support Groups', 'None'],
+        'changes': 'Any significant life changes or events recently?',
+        'changes_placeholder': 'Job changes, relationships, losses, etc...',
+        'symptoms': 'Current Symptoms',
+        'symptoms_opts': ['Anxiety', 'Depression', 'Insomnia', 'Fatigue', 'Loss of Interest',
+                          'Difficulty Concentrating', 'Changes in Appetite', 'Social Withdrawal',
+                          'Mood Swings', 'Physical Discomfort'],
+        'btn': '🔍 Get Support Plan',
+        'spinner': '🤔 AI Agents are analyzing your situation...',
+        'assessment_exp': '📊 Situation Assessment',
+        'action_exp': '🎯 Action Plan & Resources',
+        'followup_exp': '🔄 Long-term Support Strategy',
+        'success': '✅ Mental health support plan generated successfully!',
+        'error': 'An error occurred: ',
+        'assessment_label': 'Assessment: ',
+        'action_label': 'Action Plan: ',
+        'followup_label': 'Follow-up: ',
     }
+}
 
-st.sidebar.title("OpenAI API Key")
-api_key = st.sidebar.text_input("Enter your OpenAI API Key", type="password")
+# ─── SELECTOR DE IDIOMA ───────────────────────────────────────────────────────
+lang = st.session_state.lang
+t = T[lang]
 
-st.sidebar.warning("""
-## ⚠️ Important Notice
+st.sidebar.title("🌐 Idioma / Language")
+if st.sidebar.button(t['lang_btn']):
+    st.session_state.lang = 'en' if lang == 'es' else 'es'
+    st.rerun()
 
-This application is a supportive tool and does not replace professional mental health care. If you're experiencing thoughts of self-harm or severe crisis:
+st.sidebar.markdown("---")
+st.sidebar.warning(f"**{t['warning_title']}**\n\n{t['warning_body']}")
 
-- Call National Crisis Hotline: 988
-- Call Emergency Services: 911
-- Seek immediate professional help
-""")
+# ─── INTERFAZ PRINCIPAL ───────────────────────────────────────────────────────
+st.title(t['title'])
+st.info(t['team_info'])
 
-st.title("🧠 Mental Wellbeing Agent")
-
-st.info("""
-**Meet Your Mental Wellbeing Agent Team:**
-
-🧠 **Assessment Agent** - Analyzes your situation and emotional needs
-🎯 **Action Agent** - Creates immediate action plan and connects you with resources
-🔄 **Follow-up Agent** - Designs your long-term support strategy
-""")
-
-st.subheader("Personal Information")
+st.subheader(t['personal_info'])
 col1, col2 = st.columns(2)
 
 with col1:
-    mental_state = st.text_area("How have you been feeling recently?", 
-        placeholder="Describe your emotional state, thoughts, or concerns...")
+    mental_state = st.text_area(t['feeling'], placeholder=t['feeling_placeholder'])
     sleep_pattern = st.select_slider(
-        "Sleep Pattern (hours per night)",
+        t['sleep'],
         options=[f"{i}" for i in range(0, 13)],
         value="7"
     )
-    
+
 with col2:
-    stress_level = st.slider("Current Stress Level (1-10)", 1, 10, 5)
-    support_system = st.multiselect(
-        "Current Support System",
-        ["Family", "Friends", "Therapist", "Support Groups", "None"]
-    )
+    stress_level = st.slider(t['stress'], 1, 10, 5)
+    support_system = st.multiselect(t['support'], t['support_opts'])
 
-recent_changes = st.text_area(
-    "Any significant life changes or events recently?",
-    placeholder="Job changes, relationships, losses, etc..."
-)
+recent_changes = st.text_area(t['changes'], placeholder=t['changes_placeholder'])
+current_symptoms = st.multiselect(t['symptoms'], t['symptoms_opts'])
 
-current_symptoms = st.multiselect(
-    "Current Symptoms",
-    ["Anxiety", "Depression", "Insomnia", "Fatigue", "Loss of Interest", 
-     "Difficulty Concentrating", "Changes in Appetite", "Social Withdrawal",
-     "Mood Swings", "Physical Discomfort"]
-)
+# ─── LÓGICA PRINCIPAL ─────────────────────────────────────────────────────────
+if st.button(t['btn'], type="primary"):
+    with st.spinner(t['spinner']):
+        try:
+            task = f"""
+            Create a comprehensive mental health support plan based on:
+            Emotional State: {mental_state}
+            Sleep: {sleep_pattern} hours per night
+            Stress Level: {stress_level}/10
+            Support System: {', '.join(support_system) if support_system else 'None reported'}
+            Recent Changes: {recent_changes}
+            Current Symptoms: {', '.join(current_symptoms) if current_symptoms else 'None reported'}
+            Respond in {'Spanish' if lang == 'es' else 'English'}.
+            """
 
-if st.button("Get Support Plan"):
-    if not api_key:
-        st.error("Please enter your OpenAI API key.")
-    else:
-        with st.spinner('🤖 AI Agents are analyzing your situation...'):
-            try:
-                task = f"""
-                Create a comprehensive mental health support plan based on:
-                
-                Emotional State: {mental_state}
-                Sleep: {sleep_pattern} hours per night
-                Stress Level: {stress_level}/10
-                Support System: {', '.join(support_system) if support_system else 'None reported'}
-                Recent Changes: {recent_changes}
-                Current Symptoms: {', '.join(current_symptoms) if current_symptoms else 'None reported'}
-                """
+            system_messages = {
+                "assessment_agent": "You are an experienced mental health professional. Analyze the user's emotional state with clinical precision and genuine empathy. Use 'you' and 'your' when addressing the user.",
+                "action_agent": "You are a crisis intervention and resource specialist. Provide immediate evidence-based coping strategies and create a concrete daily wellness plan.",
+                "followup_agent": "You are a mental health recovery planner. Design a personalized long-term support strategy with milestone markers and relapse prevention strategies."
+            }
 
-                system_messages = {
-                    "assessment_agent": """
-                    You are an experienced mental health professional speaking directly to the user. Your task is to:
-                    1. Create a safe space by acknowledging their courage in seeking support
-                    2. Analyze their emotional state with clinical precision and genuine empathy
-                    3. Ask targeted follow-up questions to understand their full situation
-                    4. Identify patterns in their thoughts, behaviors, and relationships
-                    5. Assess risk levels with validated screening approaches
-                    6. Help them understand their current mental health in accessible language
-                    7. Validate their experiences without minimizing or catastrophizing
+            llm_config = {
+                "config_list": [{"model": "gpt-4o", "api_key": OPENAI_API_KEY}]
+            }
 
-                    Always use "you" and "your" when addressing the user. Blend clinical expertise with genuine warmth and never rush to conclusions.
-                    """,
-                    
-                    "action_agent": """
-                    You are a crisis intervention and resource specialist speaking directly to the user. Your task is to:
-                    1. Provide immediate evidence-based coping strategies tailored to their specific situation
-                    2. Prioritize interventions based on urgency and effectiveness
-                    3. Connect them with appropriate mental health services while acknowledging barriers (cost, access, stigma)
-                    4. Create a concrete daily wellness plan with specific times and activities
-                    5. Suggest specific support communities with details on how to join
-                    6. Balance crisis resources with empowerment techniques
-                    7. Teach simple self-regulation techniques they can use immediately
+            context_variables = {"assessment": None, "action": None, "followup": None}
 
-                    Focus on practical, achievable steps that respect their current capacity and energy levels. Provide options ranging from minimal effort to more involved actions.
-                    """,
-                    
-                    "followup_agent": """
-                    You are a mental health recovery planner speaking directly to the user. Your task is to:
-                    1. Design a personalized long-term support strategy with milestone markers
-                    2. Create a progress monitoring system that matches their preferences and habits
-                    3. Develop specific relapse prevention strategies based on their unique triggers
-                    4. Establish a support network mapping exercise to identify existing resources
-                    5. Build a graduated self-care routine that evolves with their recovery
-                    6. Plan for setbacks with self-compassion techniques
-                    7. Set up a maintenance schedule with clear check-in mechanisms
+            def update_assessment_overview(assessment_summary: str, context_variables: dict) -> SwarmResult:
+                context_variables["assessment"] = assessment_summary
+                st.sidebar.success(t['assessment_label'] + assessment_summary[:80] + "...")
+                return SwarmResult(agent="action_agent", context_variables=context_variables)
 
-                    Focus on building sustainable habits that integrate with their lifestyle and values. Emphasize progress over perfection and teach skills for self-directed care.
-                    """
-                }
+            def update_action_overview(action_summary: str, context_variables: dict) -> SwarmResult:
+                context_variables["action"] = action_summary
+                st.sidebar.success(t['action_label'] + action_summary[:80] + "...")
+                return SwarmResult(agent="followup_agent", context_variables=context_variables)
 
-                llm_config = {
-                    "config_list": [{"model": "gpt-4o", "api_key": api_key}]
-                }
+            def update_followup_overview(followup_summary: str, context_variables: dict) -> SwarmResult:
+                context_variables["followup"] = followup_summary
+                st.sidebar.success(t['followup_label'] + followup_summary[:80] + "...")
+                return SwarmResult(agent="assessment_agent", context_variables=context_variables)
 
-                context_variables = {
-                    "assessment": None,
-                    "action": None,
-                    "followup": None,
-                }
+            def update_system_message_func(agent: SwarmAgent, messages) -> str:
+                system_prompt = system_messages[agent.name]
+                current_gen = agent.name.split("_")[0]
 
-                def update_assessment_overview(assessment_summary: str, context_variables: dict) -> SwarmResult:
-                    context_variables["assessment"] = assessment_summary
-                    st.sidebar.success('Assessment: ' + assessment_summary)
-                    return SwarmResult(agent="action_agent", context_variables=context_variables)
+                if agent._context_variables.get(current_gen) is None:
+                    system_prompt += f" Call the update function to provide a 2-3 sentence summary of your ideas on {current_gen.upper()}."
+                    agent.llm_config['tool_choice'] = {"type": "function", "function": {"name": f"update_{current_gen}_overview"}}
+                else:
+                    agent.llm_config["tools"] = None
+                    agent.llm_config['tool_choice'] = None
+                    system_prompt += f"\n\nWrite the {current_gen} part of the report. Do not include other parts. Start with: '## {current_gen.capitalize()} Plan'."
+                    k = list(agent._oai_messages.keys())[-1]
+                    agent._oai_messages[k] = agent._oai_messages[k][:1]
 
-                def update_action_overview(action_summary: str, context_variables: dict) -> SwarmResult:
-                    context_variables["action"] = action_summary
-                    st.sidebar.success('Action Plan: ' + action_summary)
-                    return SwarmResult(agent="followup_agent", context_variables=context_variables)
+                system_prompt += "\n\nContext:\n"
+                for k, v in agent._context_variables.items():
+                    if v is not None:
+                        system_prompt += f"\n{k.capitalize()} Summary:\n{v}"
 
-                def update_followup_overview(followup_summary: str, context_variables: dict) -> SwarmResult:
-                    context_variables["followup"] = followup_summary
-                    st.sidebar.success('Follow-up Strategy: ' + followup_summary)
-                    return SwarmResult(agent="assessment_agent", context_variables=context_variables)
+                agent.client = OpenAIWrapper(**agent.llm_config)
+                return system_prompt
 
-                def update_system_message_func(agent: SwarmAgent, messages) -> str:
-                    system_prompt = system_messages[agent.name]
-                    current_gen = agent.name.split("_")[0]
-                    
-                    if agent._context_variables.get(current_gen) is None:
-                        system_prompt += f"Call the update function provided to first provide a 2-3 sentence summary of your ideas on {current_gen.upper()} based on the context provided."
-                        agent.llm_config['tool_choice'] = {"type": "function", "function": {"name": f"update_{current_gen}_overview"}}
-                    else:
-                        agent.llm_config["tools"] = None
-                        agent.llm_config['tool_choice'] = None
-                        system_prompt += f"\n\nYour task\nYou task is write the {current_gen} part of the report. Do not include any other parts. Do not use XML tags.\nStart your reponse with: '## {current_gen.capitalize()} Design'."    
-                        k = list(agent._oai_messages.keys())[-1]
-                        agent._oai_messages[k] = agent._oai_messages[k][:1]
+            state_update = UPDATE_SYSTEM_MESSAGE(update_system_message_func)
 
-                    system_prompt += f"\n\n\nBelow are some context for you to refer to:"
-                    for k, v in agent._context_variables.items():
-                        if v is not None:
-                            system_prompt += f"\n{k.capitalize()} Summary:\n{v}"
+            assessment_agent = SwarmAgent("assessment_agent", llm_config=llm_config, functions=update_assessment_overview, update_agent_state_before_reply=[state_update])
+            action_agent = SwarmAgent("action_agent", llm_config=llm_config, functions=update_action_overview, update_agent_state_before_reply=[state_update])
+            followup_agent = SwarmAgent("followup_agent", llm_config=llm_config, functions=update_followup_overview, update_agent_state_before_reply=[state_update])
 
-                    agent.client = OpenAIWrapper(**agent.llm_config)
-                    return system_prompt
-                
-                state_update = UPDATE_SYSTEM_MESSAGE(update_system_message_func)
+            assessment_agent.register_hand_off(AFTER_WORK(action_agent))
+            action_agent.register_hand_off(AFTER_WORK(followup_agent))
+            followup_agent.register_hand_off(AFTER_WORK(assessment_agent))
 
-                assessment_agent = SwarmAgent(
-                    "assessment_agent", 
-                    llm_config=llm_config,
-                    functions=update_assessment_overview,
-                    update_agent_state_before_reply=[state_update]
-                )
+            result, _, _ = initiate_swarm_chat(
+                initial_agent=assessment_agent,
+                agents=[assessment_agent, action_agent, followup_agent],
+                user_agent=None,
+                messages=task,
+                max_rounds=13,
+            )
 
-                action_agent = SwarmAgent(
-                    "action_agent",
-                    llm_config=llm_config,
-                    functions=update_action_overview,
-                    update_agent_state_before_reply=[state_update]
-                )
+            st.session_state.output = {
+                'assessment': result.chat_history[-3]['content'],
+                'action': result.chat_history[-2]['content'],
+                'followup': result.chat_history[-1]['content']
+            }
 
-                followup_agent = SwarmAgent(
-                    "followup_agent",
-                    llm_config=llm_config,
-                    functions=update_followup_overview,
-                    update_agent_state_before_reply=[state_update]
-                )
+            with st.expander(t['assessment_exp'], expanded=True):
+                st.markdown(st.session_state.output['assessment'])
+            with st.expander(t['action_exp'], expanded=True):
+                st.markdown(st.session_state.output['action'])
+            with st.expander(t['followup_exp'], expanded=True):
+                st.markdown(st.session_state.output['followup'])
 
-                assessment_agent.register_hand_off(AFTER_WORK(action_agent))
-                action_agent.register_hand_off(AFTER_WORK(followup_agent))
-                followup_agent.register_hand_off(AFTER_WORK(assessment_agent))
+            st.success(t['success'])
 
-                result, _, _ = initiate_swarm_chat(
-                    initial_agent=assessment_agent,
-                    agents=[assessment_agent, action_agent, followup_agent],
-                    user_agent=None,
-                    messages=task,
-                    max_rounds=13,
-                )
-
-                st.session_state.output = {
-                    'assessment': result.chat_history[-3]['content'],
-                    'action': result.chat_history[-2]['content'],
-                    'followup': result.chat_history[-1]['content']
-                }
-
-                with st.expander("Situation Assessment"):
-                    st.markdown(st.session_state.output['assessment'])
-
-                with st.expander("Action Plan & Resources"):
-                    st.markdown(st.session_state.output['action'])
-
-                with st.expander("Long-term Support Strategy"):
-                    st.markdown(st.session_state.output['followup'])
-
-                st.success('✨ Mental health support plan generated successfully!')
-
-            except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
+        except Exception as e:
+            st.error(t['error'] + str(e))
