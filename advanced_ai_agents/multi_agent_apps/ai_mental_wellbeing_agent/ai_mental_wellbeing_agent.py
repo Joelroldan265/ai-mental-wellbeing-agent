@@ -5,7 +5,7 @@ import os
 os.environ["AUTOGEN_USE_DOCKER"] = "0"
 
 # ─── API KEY ────────────────────────────────────────────────────────────────
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 # ─────────────────────────────────────────────────────────────────────────────
 
 if 'output' not in st.session_state:
